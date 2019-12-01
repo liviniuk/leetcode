@@ -5,15 +5,15 @@ using namespace std;
 class Solution {
 public:
     vector<int> twoSum(vector<int>& nums, int target) {
-        std::map<int, int> m;
+        unordered_map<int, int> hash;
         int n = nums.size();
         for (auto i = 0; i < n; ++i) {
-            int diff = target - nums[i];
-            if (m.find(diff) != m.end())
-                return std::vector<int>({m[diff], i});
-            m.insert(pair<int, int>(nums[i],i));
+            auto diff_it = hash.find(target - nums[i]);
+            if (diff_it != hash.end())
+                return vector<int> {diff_it->second, i};
+            hash[nums[i]] = i;
         }
-        return std::vector<int>({0,0});
+        return vector<int>({0,0});
     }
 };
 
