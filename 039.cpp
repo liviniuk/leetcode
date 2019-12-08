@@ -1,26 +1,24 @@
 class Solution {
-public:
-    vector<vector<int>> combinationSumRecursive(vector<int>& candidates, int target, int startIndex) {
-        vector<vector<int>> solutionSet;
-        int n = candidates.size();
-        for (int i = startIndex; i < n; ++i) {
-            if (candidates[i] > target)
-                continue;
-            else if (candidates[i] < target) {
-                vector<vector<int>> solutions = combinationSumRecursive(candidates, target - candidates[i], i);
-                for (vector<int> solution : solutions) {
-                    solution.insert(solution.begin(), candidates[i]);
-                    solutionSet.push_back(solution);
-                }
-            } else { // candidates[i] == target
-                vector<int> solution = {candidates[i]};
-                solutionSet.push_back(solution);
-            }
+private:
+    void backtracking(vector<int>& candidates, int target, int startIndex, vector<vector<int>>& solutionSet, vector<int>& combination) {
+        if (target == 0) {
+            // combination is a valid solution
+            solutionSet.push_back(combination);
+            return;
         }
-        return solutionSet;
+        for (int i = startIndex; i < candidates.size() && candidates[i] <= target; ++i) {
+            combination.push_back(candidates[i]); // progress
+            backtracking(candidates, target - candidates[i], i, solutionSet, combination); // recurse
+            combination.pop_back(); // backtrack
+        }
     }
     
+public:
     vector<vector<int>> combinationSum(vector<int>& candidates, int target) {
-        return combinationSumRecursive(candidates, target, 0);
+        sort(candidates.begin(), candidates.end());
+        vector<vector<int>> solutionSet;
+        vector<int> combination;
+        backtracking(candidates, target, 0, solutionSet, combination);
+        return solutionSet;
     }
 };
