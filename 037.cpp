@@ -8,11 +8,21 @@ private:
     static const int N = 9; // board size
     static const int C = sqrt(N); // subgrid size
     
-    bool horizontal[N][N] = {false};
-    bool vertical[N][N] = {false};
-    bool subgrid[N][N] = {false};
+    int N_BITS = (1 << N) - 1; // first N bits
+    vector<int> horizontal = vector<int>(N, N_BITS);
+    vector<int> vertical = vector<int>(N, N_BITS);
+    vector<int> subgrid = vector<int>(N, N_BITS);
     
-    bool recursiveSolved(vector<vector<char>>& board, int row, int col) {
+    vector<vector<int>> bitBoard = vector<vector<int>>(N, vector<int>(N, 0));
+    
+    void flipBits(int row, int col, int bit) {
+        horizontal[row] ^= bit;
+        vertical[col] ^= bit;
+        subgrid[C * (row / C) + col / C] ^= bit;
+        bitBoard[row][col] ^= bit;
+    }
+    
+    bool recursiveSolved(int row, int col) {
         if (col == N) {
             col = 0;
             ++row;
@@ -21,23 +31,19 @@ private:
                 return true;
         }
         
-        if (board[row][col] != EMPTY)
-            return recursiveSolved(board, row, col + 1);
+        if (bitBoard[row][col] != 0)
+            return recursiveSolved(row, col + 1);
         
         int s = C * (row / C) + col / C;
+        int options = horizontal[row] & vertical[col] & subgrid[s];
         
-        for (int num = 0; num < N; ++num) {
-            // Check if num would satisfy AllDiff constraints if placed at [row,col]
-            if (horizontal[row][num] == false && vertical[col][num] == false && subgrid[s][num] == false) {
-                board[row][col] = '1' + num;
-                horizontal[row][num] = vertical[col][num] = subgrid[s][num] = true;
-                
-                if (recursiveSolved(board, row, col + 1))
-                    return true;
-                
-                board[row][col] = EMPTY;
-                horizontal[row][num] = vertical[col][num] = subgrid[s][num] = false;
-            }
+        while (options) {
+            int next = ((options - 1) ^ options) & options; // the smallest (last) bit in options is the next option to try
+            options ^= next; // remove next bit from options
+            flipBits(row, col, next);
+            if (recursiveSolved(row, col + 1))
+                return true;
+            flipBits(row, col, next);
         }
         
         return false;
@@ -48,11 +54,17 @@ public:
         for (int i = 0; i < N; ++i)
             for (int j = 0; j < N; ++j)
                 if (board[i][j] != EMPTY) {
-                    int num = board[i][j] - '1';
-                    int s = C * (i / C) + j / C;
-                    horizontal[i][num] = vertical[j][num] = subgrid[s][num] = true;
+                    int bit = 1 << (board[i][j] - '1');
+                    flipBits(i, j, bit);
                 }
         
-        recursiveSolved(board, 0, 0);
+        recursiveSolved(0, 0);
+        for (int i = 0; i < N; ++i)
+            for (int j = 0; j < N; ++j) {
+                int num = 0; 
+                while ((bitBoard[i][j] >> num) > 0) 
+                    num++;
+                board[i][j] = (char)('0' + num);
+            }
     }
 };
